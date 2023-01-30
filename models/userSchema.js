@@ -5,15 +5,22 @@ const bcryptjs = require("bcryptjs");
 // User Schema Or Document Structure
 
 const userSchema = mongoose.Schema({
-    username : {
+    fullname : {
         type : String,
         required: true,
-        unique : true
     },
     email:{
         type:String,
         required:true,
         unique:true
+    },
+    address:{
+        type:String,
+        required:true,
+    },
+    phone:{
+        type:String,
+        required:true,
     },
     password:{
         type:String,
@@ -39,7 +46,7 @@ userSchema.pre('save', async function(next){
 //Generate Tokens to verify user
 userSchema.methods.generateToken = async function(){
     try{
-    let generatedToken = jwt.sign({_id : this.id} , youcanchooseanysecretkeyofcharacters);
+    let generatedToken = jwt.sign({_id : this.id} , process.env.SECRET_KEY);
     this.tokens = this.tokens.concat({token : generatedToken});
     await this.save();
     return generatedToken;

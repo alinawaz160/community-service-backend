@@ -28,14 +28,20 @@ app.get('/', (req, res) => {
 app.post('/register', async (req, res) => {
     try {
         // Get body
-        const username = req.body.username;
+        const fullname = req.body.fullname;
         const email = req.body.email;
+        const phone = req.body.phone;
+        const address = req.body.address;
         const password = req.body.password;
+        const confirmPassword = req.body.confirmPassword;
 
         const createUser = new Users({
-            username: username,
+            fullname: fullname,
             email: email,
-            password: password
+            password: password,
+            phone: phone,
+            address: address,
+            confirmPassword: confirmPassword
         });
         //Saving the created user...
         const created = await createUser.save();

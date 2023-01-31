@@ -40,8 +40,7 @@ app.post('/register', async (req, res) => {
             email: email,
             password: password,
             phone: phone,
-            address: address,
-            confirmPassword: confirmPassword
+            address: address
         });
         //Saving the created user...
         const created = await createUser.save();

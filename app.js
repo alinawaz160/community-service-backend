@@ -14,8 +14,9 @@ const port = process.env.PORT || 3000;
 
 //Require Model
 const Users = require("./models/userSchema");
+const Projects = require('./models/projectSchema');
 
-//using methods to get Data and cookies from Frontend
+//using methods to get req and cookies from Frontend
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
@@ -81,6 +82,35 @@ app.post('/login', async (req, res) => {
     }
     catch (error) {
         res.status(400).send(error)
+    }
+})
+
+//Projects
+//Create Project
+app.post('/createProject' , async(req,res)=>{
+    try {
+        const projectName =  req.projectName;
+        const ngo = req.ngo;
+        const uploadDate = req.uploadDate;
+        const description = req.description;
+        const isActive = req.isActive;
+        const image = imageFile;
+
+        const createproject = new Projects({
+             projectName :  projectName,
+             ngo : ngo,
+             uploadDate : uploadDate,
+             description : description,
+             isActive : isActive,
+             image : image
+        });
+        //Saving the created project...
+        const created = await createproject.save();
+        console.log(created);
+        res.status(200).send("Created");
+
+    } catch (error) {
+        console.log(error);
     }
 })
 

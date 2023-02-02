@@ -89,12 +89,12 @@ app.post('/login', async (req, res) => {
 //Create Project
 app.post('/createProject' , async(req,res)=>{
     try {
-        const projectName =  req.projectName;
-        const ngo = req.ngo;
-        const uploadDate = req.uploadDate;
-        const description = req.description;
-        const isActive = req.isActive;
-        const image = imageFile;
+        const projectName =  req.body.projectName;
+        const ngo = req.body.ngo;
+        const uploadDate = req.body.uploadDate;
+        const description = req.body.description;
+        const isActive = req.body.isActive;
+        const image = req.body.image;
 
         const createproject = new Projects({
              projectName :  projectName,
@@ -114,6 +114,22 @@ app.post('/createProject' , async(req,res)=>{
     }
 })
 
+//Get Projects
+app.get("/getProjects", async (req, res) => {
+    try {
+      const projects = await Projects.find({});
+      if(projects)
+      {
+        res.status(200).send(projects);
+        console.log("Data Retrived")
+      }
+      else{
+        res.status(400).send([{}]);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  });
 //Run Server
 app.listen(3001, () => {
     console.log("Server is listening")

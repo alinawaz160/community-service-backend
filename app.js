@@ -15,7 +15,7 @@ const port = process.env.PORT || 3000;
 //Require Model
 const Users = require("./models/userSchema");
 const Projects = require('./models/projectSchema');
-
+const authenticate  =require("./middleware/authenticate");
 //using methods to get req and cookies from Frontend
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
@@ -41,7 +41,7 @@ app.post('/register', async (req, res) => {
             email: email,
             password: password,
             phone: phone,
-            address: address
+            address: address,
         });
         //Saving the created user...
         const created = await createUser.save();
@@ -59,22 +59,22 @@ app.post('/login', async (req, res) => {
         const email = req.body.email;
         const password = req.body.password;
         //Find User if exist
-        const user = await Users.findOne({ email: email});
+        const user = await Users.findOne({ email: email });
         if (user) {
             //Verify password
             const isMatch = await bcryptjs.compare(password, user.password);
 
             if (isMatch) {
-                const token = await user.generteToken();
+                const token = await user.generateToken();
                 console.log(token);
                 res.cookie("jwt", token, {
                     expires: new Date(Date.now() + 86400000),
                     httpOnly: true
                 })
                 res.status(200).send("LoggedIn");
-                console.log("LoggedIn"); 
+                console.log("LoggedIn");
             } else {
-                res.status(400).send("Invali Credentials")
+                res.status(400).send("Invalid Credentials")
             }
         } else {
             res.status(400).send("Invalid Credentials");
@@ -87,49 +87,132 @@ app.post('/login', async (req, res) => {
 
 //Projects
 //Create Project
-app.post('/createProject' , async(req,res)=>{
+const multer = require("multer");
+
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
+
+app.post("/createProject", upload.single("image"), async (req, res) => {
     try {
-        const projectName =  req.body.projectName;
+        const projectName = req.body.projectName;
         const ngo = req.body.ngo;
         const uploadDate = req.body.uploadDate;
         const description = req.body.description;
         const isActive = req.body.isActive;
-        const image = req.body.image;
+        
+        console.log("uploadDate",uploadDate)
+        const image = req.file.buffer;
 
         const createproject = new Projects({
-             projectName :  projectName,
-             ngo : ngo,
-             uploadDate : uploadDate,
-             description : description,
-             isActive : isActive,
-             image : image
+            projectName: projectName,
+            ngo: ngo,
+            uploadDate: new Date(uploadDate),
+            description: description,
+            isActive: isActive,
+            image: image
         });
         //Saving the created project...
         const created = await createproject.save();
         console.log(created);
         res.status(200).send("Created");
-
     } catch (error) {
         console.log(error);
     }
-})
+});
+
 
 //Get Projects
 app.get("/getProjects", async (req, res) => {
     try {
-      const projects = await Projects.find({});
-      if(projects)
-      {
-        res.status(200).send(projects);
-        console.log("Data Retrived")
-      }
-      else{
-        res.status(400).send([{}]);
-      }
+        const projects = await Projects.find({});
+        if (projects.length > 0) {
+            res.status(200).send(projects);
+            console.log("Data Retrived")
+        }
+        else {
+            res.status(204).send("No Data found");
+        }
     } catch (error) {
-      console.log(error);
+        console.error(error);
+        res.status(500).send("Internal Server Error");
     }
-  });
+});
+
+//Get Volunteers
+app.get("/getVolunteers", async (req, res) => {
+    try {
+        const volunteers = await Users.find({});
+        if (volunteers.length > 0) {
+            res.status(200).send(volunteers);
+            console.log("Volunteers Found")
+        }
+        else {
+            res.status(204).send("No Data found");
+        }
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("Internal Server Error");
+    }
+});
+
+//Update Volunteer
+app.put("/updateVolunteer/:id", async (req, res) => {
+    try {
+    const volunteer = await Users.findByIdAndUpdate(req.params.id, req.body, {new: true});
+    if (volunteer) {
+    res.status(200).send(volunteer);
+    console.log("Volunteer Updated")
+    } else {
+    res.status(404).send("Volunteer Not Found");
+    }
+    } catch (error) {
+    console.error(error);
+    res.status(500).send("Internal Server Error");
+    }
+    });
+
+
+//Get Ngo
+app.get("/getNGO", async (req, res) => {
+    try {
+        const volunteers = await Users.find({});
+        if (volunteers.length > 0) {
+            res.status(200).send(volunteers);
+            console.log("Volunteers Found")
+        }
+        else {
+            res.status(204).send("No Data found");
+        }
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("Internal Server Error");
+    }
+});
+
+app.put("/updateNGO/:id", async (req, res) => {
+    try {
+    const volunteer = await Users.findByIdAndUpdate(req.params.id, req.body, {new: true});
+    if (volunteer) {
+    res.status(200).send(volunteer);
+    console.log("Volunteer Updated")
+    } else {
+    res.status(404).send("Volunteer Not Found");
+    }
+    } catch (error) {
+    console.error(error);
+    res.status(500).send("Internal Server Error");
+    }
+    });
+
+//Authentication
+app.get('/auth' ,authenticate,async (req,res)=>{
+    
+})
+//Logout Page
+app.get('/logout', (req, res) => {
+    res.clearCookie("jwt", { path: '/' })
+    res.status(200).send("User Logged Out");
+})
 //Run Server
 app.listen(3001, () => {
     console.log("Server is listening")

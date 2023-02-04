@@ -19,6 +19,9 @@ const projectSchema = mongoose.Schema({
         type:String,
         required:true,
     },
+    uploadDate:{
+        type:Date,
+    },
     description:{
         type:String,
         required:true,

@@ -225,7 +225,7 @@ app.get("/getNGO", async (req, res) => {
         res.status(500).send("Internal Server Error");
     }
 });
-
+//update NGO
 app.put("/updateNGO/:id", async (req, res) => {
     try {
     const volunteer = await Users.findByIdAndUpdate(req.params.id, req.body, {new: true});

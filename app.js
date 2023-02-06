@@ -88,6 +88,7 @@ app.post('/login', async (req, res) => {
 //Projects
 //Create Project
 const multer = require("multer");
+const { default: mongoose } = require('mongoose');
 
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
@@ -138,6 +139,24 @@ app.get("/getProjects", async (req, res) => {
     }
 });
 
+//Delete Projects
+app.delete("/deleteProject/:id", async (req, res) => {
+
+    const id = req.params.id;
+    const projectId = mongoose.Types.ObjectId(id);
+    try {
+        const project = await Projects.findByIdAndDelete(projectId);
+        if (project) {
+            res.status(200).send("Project deleted successfully");
+        } else {
+            res.status(404).send("Project not found");
+        }
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("Internal Server Error");
+    }
+});
+
 //Get Volunteers
 app.get("/getVolunteers", async (req, res) => {
     try {
@@ -148,6 +167,24 @@ app.get("/getVolunteers", async (req, res) => {
         }
         else {
             res.status(204).send("No Data found");
+        }
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("Internal Server Error");
+    }
+});
+
+//Delete Volunteer
+app.delete("/deleteVolunteer/:id", async (req, res) => {
+
+    const id = req.params.id;
+    const projectId = mongoose.Types.ObjectId(id);
+    try {
+        const project = await Projects.findByIdAndDelete(projectId);
+        if (project) {
+            res.status(200).send("Volunteer deleted successfully");
+        } else {
+            res.status(404).send("Volunteer not found");
         }
     } catch (error) {
         console.error(error);

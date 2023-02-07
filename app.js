@@ -176,12 +176,11 @@ app.get("/getVolunteers", async (req, res) => {
 
 //Delete Volunteer
 app.delete("/deleteVolunteer/:id", async (req, res) => {
-
     const id = req.params.id;
-    const projectId = mongoose.Types.ObjectId(id);
+    const volunteerId = mongoose.Types.ObjectId(id);
     try {
-        const project = await Projects.findByIdAndDelete(projectId);
-        if (project) {
+        const volunteer = await Users.findOneAndDelete({ _id: volunteerId });
+        if (volunteer) {
             res.status(200).send("Volunteer deleted successfully");
         } else {
             res.status(404).send("Volunteer not found");

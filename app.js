@@ -14,6 +14,7 @@ const port = process.env.PORT || 3000;
 
 //Require Model
 const Users = require("./models/userSchema");
+const Ngos = require("./models/ngoSchema");
 const Projects = require('./models/projectSchema');
 const authenticate  =require("./middleware/authenticate");
 //using methods to get req and cookies from Frontend
@@ -43,10 +44,39 @@ app.post('/register', async (req, res) => {
             phone: phone,
             address: address,
         });
+        //Saving the created volunteer...
+        const created = await createUser.save();
+        console.log(created);
+        res.status(200).send("Volunteer Registered");
+    }
+    catch (error) {
+        res.status(400).send(error);
+    }
+})
+
+
+//NgoRegistration
+app.post('/registerNgo', async (req, res) => {
+    try {
+        // Get body
+        const ngoName = req.body.ngoName;
+        const email = req.body.email;
+        const phone = req.body.phone;
+        const branches = req.body.branches;
+        const password = req.body.password;
+        const confirmPassword = req.body.confirmPassword;
+
+        const createUser = new Ngos({
+            ngoName: ngoName,
+            email: email,
+            password: password,
+            phone: phone,
+            branches: branches,
+        });
         //Saving the created user...
         const created = await createUser.save();
         console.log(created);
-        res.status(200).send("Registered");
+        res.status(200).send("NGO Registered");
     }
     catch (error) {
         res.status(400).send(error);
@@ -211,7 +241,7 @@ app.put("/updateVolunteer/:id", async (req, res) => {
 //Get Ngo
 app.get("/getNGO", async (req, res) => {
     try {
-        const volunteers = await Users.find({});
+        const volunteers = await Ngo.find({});
         if (volunteers.length > 0) {
             res.status(200).send(volunteers);
             console.log("Volunteers Found")

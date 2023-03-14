@@ -26,6 +26,14 @@ const userSchema = mongoose.Schema({
         type:String,
         required:true,
     },
+    activeStatus:{
+        type:String,
+        required:true,
+    },
+    requestCertification:{
+        type:Number,
+        default:0
+    },
     tokens:[
         {
             token:{

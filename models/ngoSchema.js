@@ -22,6 +22,10 @@ const ngoSchema = mongoose.Schema({
         type:String,
         required:true,
     },
+    activeStatus:{
+        type:String,
+        required:true,
+    },
     password:{
         type:String,
         required:true,
@@ -57,5 +61,5 @@ ngoSchema.methods.generateToken = async function(){
 }
 
 //Create Model
-const Ngo = new mongoose.model("NGO", ngoSchema);
-module.exports = Ngo;
+const Ngos = new mongoose.model("NGO", ngoSchema);
+module.exports = Ngos;

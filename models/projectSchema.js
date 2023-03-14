@@ -5,35 +5,39 @@ autoIncrement.initialize(connection);
 // User Schema Or Document Structure
 
 const projectSchema = mongoose.Schema({
-    index : {
-        type : Number,
-        unique : true,
+    index: {
+        type: Number,
+        unique: true,
         default: 0
     },
-    projectName:{
-        type:String,
-        required:true,
-        unique:true,
+    projectName: {
+        type: String,
+        required: true,
+        unique: true,
     },
-    ngo:{
-        type:String,
-        required:true,
+    ngo: {
+        type: String,
+        required: true,
     },
-    uploadDate:{
-        type:Date,
+    uploadDate: {
+        type: String,
+        required :true
     },
-    description:{
-        type:String,
-        required:true,
+    description: {
+        type: String,
+        required: true,
     },
-    isActive:{
-        type:String,
-        required:true,
+    isActive: {
+        type: Boolean,
+        default: false,
     },
-    image:{
-        type:String,
-        required:true,
-        unique:true
+    vol: {
+        type: [String],
+        required: true,
+    },
+    status: {
+        type: Boolean,
+        default: false,
     }
 
 })

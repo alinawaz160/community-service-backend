@@ -10,13 +10,14 @@ const app = express();
 dotenv.config({ path: "./config.env" });
 require("./db/conn");
 
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 3001;
 
 //Require Model
 const Users = require("./models/userSchema");
 const Ngos = require("./models/ngoSchema");
 const Projects = require('./models/projectSchema');
-const authenticate  =require("./middleware/authenticate");
+const authenticate = require("./middleware/authenticate");
+const Admin = require("./models/adminSchema");
 //using methods to get req and cookies from Frontend
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
@@ -35,6 +36,8 @@ app.post('/register', async (req, res) => {
         const phone = req.body.phone;
         const address = req.body.address;
         const password = req.body.password;
+        const activeStatus = req.body.activeStatus;
+        const requestCertification = req.body.requestCertification;
         const confirmPassword = req.body.confirmPassword;
 
         const createUser = new Users({
@@ -42,7 +45,9 @@ app.post('/register', async (req, res) => {
             email: email,
             password: password,
             phone: phone,
+            activeStatus: activeStatus,
             address: address,
+            requestCertification: requestCertification
         });
         //Saving the created volunteer...
         const created = await createUser.save();
@@ -64,6 +69,7 @@ app.post('/registerNgo', async (req, res) => {
         const phone = req.body.phone;
         const branches = req.body.branches;
         const password = req.body.password;
+        const activeStatus = req.body.activeStatus;
         const confirmPassword = req.body.confirmPassword;
 
         const createUser = new Ngos({
@@ -72,6 +78,8 @@ app.post('/registerNgo', async (req, res) => {
             password: password,
             phone: phone,
             branches: branches,
+            password:password,
+            activeStatus: activeStatus
         });
         //Saving the created user...
         const created = await createUser.save();
@@ -94,7 +102,7 @@ app.post('/login', async (req, res) => {
             //Verify password
             const isMatch = await bcryptjs.compare(password, user.password);
 
-            if (isMatch) {
+            if (isMatch && user.activeStatus === "true") {
                 const token = await user.generateToken();
                 console.log(token);
                 res.cookie("jwt", token, {
@@ -115,32 +123,89 @@ app.post('/login', async (req, res) => {
     }
 })
 
+//Login Ngo
+app.post('/ngoLogin', async (req, res) => {
+    try {
+        const email = req.body.email;
+        const password = req.body.password;
+        //Find User if exist
+        const user = await Ngos.findOne({ email: email });
+        if (user) {
+            //Verify password
+            const isMatch = await bcryptjs.compare(password, user.password);
+
+            if (isMatch && user.activeStatus === "true") {
+                const token = await user.generateToken();
+                console.log(token);
+                res.cookie("jwt", token, {
+                    expires: new Date(Date.now() + 86400000),
+                    httpOnly: true
+                })
+                res.status(200).send("LoggedIn");
+                console.log("LoggedIn");
+            } else {
+                res.status(400).send("Invalid Credentials")
+            }
+        } else {
+            res.status(400).send("Invalid Credentials");
+        }
+    }
+    catch (error) {
+        res.status(400).send(error)
+    }
+})
+
+//Login Admin
+app.post('/adminLogin', async (req, res) => {
+    try {
+        const email = req.body.email;
+        const password = req.body.password;
+        //Find User if exist
+        const user = await Admin.findOne({ email: email });
+        if (user) {
+            //Verify password
+
+            if (password === user.password) {
+                const token = await user.generateToken();
+                console.log(token);
+                res.cookie("jwt", token, {
+                    expires: new Date(Date.now() + 86400000),
+                    httpOnly: true
+                })
+                res.status(200).send("LoggedIn");
+                console.log("LoggedIn");
+            } else {
+                res.status(400).send("Invalid Credentials")
+            }
+        } else {
+            res.status(400).send("Invalid Credentials");
+        }
+    }
+    catch (error) {
+        res.status(400).send(error)
+    }
+})
+
+
+
 //Projects
 //Create Project
-const multer = require("multer");
-const { default: mongoose } = require('mongoose');
-
-const storage = multer.memoryStorage();
-const upload = multer({ storage: storage });
-
-app.post("/createProject", upload.single("image"), async (req, res) => {
+app.post("/createProject", async (req, res) => {
     try {
         const projectName = req.body.projectName;
         const ngo = req.body.ngo;
         const uploadDate = req.body.uploadDate;
         const description = req.body.description;
         const isActive = req.body.isActive;
-        
-        console.log("uploadDate",uploadDate)
-        const image = req.file.buffer;
-
+        const vol = req.body.vol;
         const createproject = new Projects({
             projectName: projectName,
             ngo: ngo,
-            uploadDate: new Date(uploadDate),
+            uploadDate: uploadDate,
             description: description,
             isActive: isActive,
-            image: image
+            status: false,
+            vol:vol,
         });
         //Saving the created project...
         const created = await createproject.save();
@@ -222,29 +287,48 @@ app.delete("/deleteVolunteer/:id", async (req, res) => {
 });
 
 //Update Volunteer
+const { default: mongoose } = require('mongoose');
+app.put("/updateVolunteerImage/:id", async (req, res) => {
+    try {
+        const volunteer = await Users.findByIdAndUpdate(req.params.id, 
+            {
+                requestCertification : req.body.requestCertification
+            });
+        if (volunteer) {
+            res.status(200).send(volunteer);
+            console.log("Volunteer Updated")
+        } else {
+            res.status(404).send("Volunteer Not Found");
+        }
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("Internal Server Error");
+    }
+});
+
 app.put("/updateVolunteer/:id", async (req, res) => {
     try {
-    const volunteer = await Users.findByIdAndUpdate(req.params.id, req.body, {new: true});
-    if (volunteer) {
-    res.status(200).send(volunteer);
-    console.log("Volunteer Updated")
-    } else {
-    res.status(404).send("Volunteer Not Found");
-    }
+        const volunteer = await Users.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        if (volunteer) {
+            res.status(200).send(volunteer);
+            console.log("Volunteer Updated")
+        } else {
+            res.status(404).send("Volunteer Not Found");
+        }
     } catch (error) {
-    console.error(error);
-    res.status(500).send("Internal Server Error");
+        console.error(error);
+        res.status(500).send("Internal Server Error");
     }
-    });
+});
 
 
 //Get Ngo
 app.get("/getNGO", async (req, res) => {
     try {
-        const volunteers = await Ngo.find({});
-        if (volunteers.length > 0) {
-            res.status(200).send(volunteers);
-            console.log("Volunteers Found")
+        const ngos = await Ngos.find({});
+        if (ngos.length > 0) {
+            res.status(200).send(ngos);
+            console.log("Ngos Found")
         }
         else {
             res.status(204).send("No Data found");
@@ -257,22 +341,53 @@ app.get("/getNGO", async (req, res) => {
 //update NGO
 app.put("/updateNGO/:id", async (req, res) => {
     try {
-    const volunteer = await Users.findByIdAndUpdate(req.params.id, req.body, {new: true});
-    if (volunteer) {
-    res.status(200).send(volunteer);
-    console.log("Volunteer Updated")
-    } else {
-    res.status(404).send("Volunteer Not Found");
-    }
+        const ngo = await Ngos.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        if (ngo) {
+            res.status(200).send(ngo);
+            console.log("Ngo Updated")
+        } else {
+            res.status(404).send("Ngo Not Found");
+        }
     } catch (error) {
-    console.error(error);
-    res.status(500).send("Internal Server Error");
+        console.error(error);
+        res.status(500).send("Internal Server Error");
     }
-    });
+});
 
+app.delete("/deleteNGO/:id", async (req, res) => {
+    const id = req.params.id;
+    const ngoId = mongoose.Types.ObjectId(id);
+    try {
+        const ngo = await Ngos.findOneAndDelete({ _id: ngoId });
+        if (ngo) {
+            res.status(200).send("NGO deleted successfully");
+        } else {
+            res.status(404).send("NGO not found");
+        }
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("Internal Server Error");
+    }
+});
+
+//Update Project
+app.put("/updateProject/:id", async (req, res) => {
+    try {
+        const project = await Projects.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        if (project) {
+            res.status(200).send(project);
+            console.log("Project Updated")
+        } else {
+            res.status(404).send("Project Not Found");
+        }
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("Internal Server Error");
+    }
+});
 //Authentication
-app.get('/auth' ,authenticate,async (req,res)=>{
-    
+app.get('/auth', authenticate, async (req, res) => {
+
 })
 //Logout Page
 app.get('/logout', (req, res) => {
